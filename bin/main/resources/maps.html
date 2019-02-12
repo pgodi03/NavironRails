@@ -1,0 +1,135 @@
+<html>
+<head>
+  <style >
+      #map{
+        height:100%;
+        width:100%;
+    }
+  </style>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+
+
+<script type="text/javascript">
+  //this is different from last time where we just included them in the body section of the html.
+  //this function is initialized in the body.
+  function initialize() {
+
+    var latitude 
+    var longitude
+    var elev
+    
+    
+    document.latVal = 30.800
+    document.lngVal = -97.588
+
+    var options = {
+      zoom: 8,
+      center: {lat: document.latVal,lng: document.lngVal},
+      mapTypeId: 'terrain',
+      mapTypeControl: false,
+
+      //takes out the unwanted features that come default with google maps. 
+      //we need to implement methods inside java that does these features so we can put the track building layer on top. 
+      scrollwheel: false,
+      disableDefaultUI: true,
+      draggable: false,
+    }
+ 
+    document.map = new google.maps.Map(document.getElementById("map"),options);
+    document.elevator = new google.maps.ElevationService();
+ 
+
+    //methods for java
+
+    //I consolidated all 3 listeners into one functions for now.
+    //Need to look into ajax for having the variables sync correctly.
+    //the variables elev, longitude and latitude are global variables, need to look into ways to minimize exposure. 
+
+    google.maps.event.addListener(document.map, "click", function(event){
+      var latLng = event.latLng;
+
+      console.log("Longitude: " + latLng.lng());
+      console.log("Latitude: " + latLng.lat());
+     
+
+      //longitude = latLng.lng();
+      document.latitude = latLng.lat();
+      //elevation function.
+
+
+      var locations = [];
+      locations.push(latLng);
+
+      var positionalRequest = {
+        'locations' : locations
+      } 
+        document.elevator.getElevationForLocations(positionalRequest, function(results, status){
+        if(status == google.maps.ElevationStatus.OK){
+          if(results[0]){
+            //printing it to console.log for debugging purpose.
+            console.log("The elevation for this point: " + results[0].elevation);
+            elev = results[0].elevation
+          }
+          else{
+            "No results found";
+          }
+        }
+      });
+
+    });
+
+
+    document.getCenterLat = function getCenterLat(){
+      return document.latVal;
+    }
+    
+    document.getCenterLng = function getCenterLng(){
+      return document.lngVal;
+    }
+    
+    //this works by changing the zoom level inherennt in the google maps.
+    zoomMin = 0;
+    zoomMax = 20;// change this number to suit our needs.
+
+    document.scrollUp = function(){
+      return document.map.panBy(0, 10);
+    }
+    document.scrollDown = function(){
+      return document.map.panBy(0, -10);
+    }
+    document.scrollRight = function(){
+      return document.map.panBy(10, 0);
+    } 
+    document.scrollLeft = function(){
+      return document.map.panBy(-10, 0);
+    }
+
+    document.getZoom = function getZoom(){
+      return document.map.getZoom();   
+    }
+
+    document.zoomIn = function zoomIn() {
+      var currentZoom= document.map.getZoom();
+      if (currentZoom <= zoomMax) document.map.setZoom(currentZoom + 1);
+    }
+    
+    document.zoomOut = function zoomOut() {
+      var currentZoom = document.map.getZoom();
+      if (currentZoom > zoomMin) document.map.setZoom(currentZoom - 1);
+    }
+    
+    document.panToPoint = function panToPoint(x, y){
+      document.map.panBy(x, y);
+      // document.map.panBy(0.0);
+      // google.maps.event.trigger(document.map, 'resize');
+    }     
+    
+}
+</script>
+</head>
+<body onload="initialize()">
+  <div id = "map"></div>
+   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBcsWrtK6mjCXBA0jgtTRowSSPx-3hCThk&"
+    ></script>
+</body>
+</html>
